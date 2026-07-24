@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import { NICKNAME_MAX_LENGTH, readSavedNickname, saveNickname } from "@/lib/nickname";
 
 type Comment = {
   id: string;
   content: string;
+  nickname: string;
   created_at: string;
+  isMine: boolean;
 };
 
 async function extractErrorMessage(res: Response): Promise<string> {
@@ -26,9 +30,20 @@ export default function CommentSection({
   initialComments: Comment[];
 }) {
   const [comments, setComments] = useState(initialComments);
+  const [nickname, setNickname] = useState("");
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const [editPending, setEditPending] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletePending, setDeletePending] = useState(false);
+
+  useEffect(() => {
+    setNickname(readSavedNickname());
+  }, []);
 
   async function handleSubmit() {
     const trimmed = content.trim();
@@ -36,12 +51,13 @@ export default function CommentSection({
 
     setSubmitting(true);
     setError(null);
+    saveNickname(nickname);
 
     try {
       const res = await fetch(`/api/games/${slug}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: trimmed }),
+        body: JSON.stringify({ content: trimmed, nickname }),
       });
 
       if (!res.ok) {
@@ -49,9 +65,15 @@ export default function CommentSection({
         return;
       }
 
-      // Route Handler가 생성된 행을 돌려주지 않으므로 낙관적으로 화면에 먼저 반영한다.
+      const { id } = (await res.json()) as { id: string };
       setComments((prev) => [
-        { id: crypto.randomUUID(), content: trimmed, created_at: new Date().toISOString() },
+        {
+          id,
+          content: trimmed,
+          nickname: nickname.trim() || "익명",
+          created_at: new Date().toISOString(),
+          isMine: true,
+        },
         ...prev,
       ]);
       setContent("");
@@ -62,11 +84,76 @@ export default function CommentSection({
     }
   }
 
+  function startEditing(comment: Comment) {
+    setEditingId(comment.id);
+    setEditContent(comment.content);
+  }
+
+  async function handleEditSubmit() {
+    const trimmed = editContent.trim();
+    if (!editingId || !trimmed || editPending) return;
+
+    setEditPending(true);
+    try {
+      const res = await fetch(`/api/games/${slug}/comments/${editingId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: trimmed }),
+      });
+
+      if (!res.ok) {
+        setError(await extractErrorMessage(res));
+        return;
+      }
+
+      setComments((prev) =>
+        prev.map((c) => (c.id === editingId ? { ...c, content: trimmed } : c)),
+      );
+      setEditingId(null);
+    } catch {
+      setError("네트워크 오류가 발생했습니다.");
+    } finally {
+      setEditPending(false);
+    }
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deletingId || deletePending) return;
+
+    setDeletePending(true);
+    try {
+      const res = await fetch(`/api/games/${slug}/comments/${deletingId}`, { method: "DELETE" });
+      if (!res.ok) {
+        setError(await extractErrorMessage(res));
+        return;
+      }
+      setComments((prev) => prev.filter((c) => c.id !== deletingId));
+      setDeletingId(null);
+    } catch {
+      setError("네트워크 오류가 발생했습니다.");
+    } finally {
+      setDeletePending(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <h2 className="font-semibold">댓글 {comments.length}</h2>
 
       <div className="flex flex-col gap-2">
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="flex items-center justify-between">
+            닉네임 (선택)
+            <span className="text-xs text-zinc-400">{nickname.length}/{NICKNAME_MAX_LENGTH}</span>
+          </span>
+          <input
+            value={nickname}
+            onChange={(e) => setNickname(e.target.value)}
+            maxLength={NICKNAME_MAX_LENGTH}
+            placeholder="입력하지 않으면 '익명'으로 표시돼요"
+            className="rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"
+          />
+        </label>
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -93,11 +180,74 @@ export default function CommentSection({
       <ul className="flex flex-col gap-3">
         {comments.map((comment) => (
           <li key={comment.id} className="rounded-md border border-zinc-200 p-3 text-sm dark:border-zinc-800">
-            {comment.content}
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-zinc-500">{comment.nickname}</span>
+              {comment.isMine && editingId !== comment.id && (
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => startEditing(comment)}
+                    className="text-xs text-zinc-400 underline hover:text-foreground"
+                  >
+                    수정
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeletingId(comment.id)}
+                    className="text-xs text-zinc-400 underline hover:text-red-600"
+                  >
+                    삭제
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {editingId === comment.id ? (
+              <div className="flex flex-col gap-2">
+                <textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  maxLength={300}
+                  rows={2}
+                  disabled={editPending}
+                  className="resize-none rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingId(null)}
+                    disabled={editPending}
+                    className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium disabled:opacity-40 dark:border-zinc-700"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleEditSubmit}
+                    disabled={!editContent.trim() || editPending}
+                    className="rounded-md bg-foreground px-3 py-1.5 text-xs font-medium text-background disabled:opacity-40"
+                  >
+                    {editPending ? "저장 중..." : "저장"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              comment.content
+            )}
           </li>
         ))}
         {comments.length === 0 && <li className="text-sm text-zinc-500">아직 댓글이 없습니다.</li>}
       </ul>
+
+      <ConfirmDialog
+        open={deletingId !== null}
+        title="댓글을 삭제할까요?"
+        description="삭제한 댓글은 되돌릴 수 없습니다."
+        confirmLabel="네, 삭제"
+        pending={deletePending}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeletingId(null)}
+      />
     </div>
   );
 }

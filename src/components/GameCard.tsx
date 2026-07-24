@@ -13,6 +13,7 @@ export default function GameCard({
   rank,
   likesCount,
   commentsCount,
+  creatorNickname,
 }: {
   slug: string;
   optionA: OptionData;
@@ -20,6 +21,7 @@ export default function GameCard({
   rank?: number;
   likesCount?: number;
   commentsCount?: number;
+  creatorNickname?: string | null;
 }) {
   const total = optionA.votes + optionB.votes;
   const pctA = total === 0 ? 50 : Math.round((optionA.votes / total) * 100);
@@ -31,8 +33,11 @@ export default function GameCard({
       className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 transition hover:border-foreground dark:border-zinc-800"
     >
       <div className="flex items-center justify-between gap-2">
-        {rank !== undefined && <span className="text-sm font-semibold text-zinc-500">#{rank}</span>}
-        <span className="ml-auto flex items-center gap-2 text-xs text-zinc-500">
+        <span className="flex items-center gap-1.5 text-sm">
+          {rank !== undefined && <span className="font-semibold text-zinc-500">#{rank}</span>}
+          {creatorNickname && <span className="truncate text-xs text-zinc-400">by {creatorNickname}</span>}
+        </span>
+        <span className="ml-auto flex shrink-0 items-center gap-2 text-xs text-zinc-500">
           {likesCount !== undefined && <span>♥ {likesCount}</span>}
           {commentsCount !== undefined && <span>댓글 {commentsCount}</span>}
           <span>투표 {total}표</span>
@@ -54,7 +59,7 @@ function OptionThumb({ option, label, percent }: { option: OptionData; label: st
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={option.imageUrl} alt={option.title ?? `옵션 ${label}`} className="h-full w-full object-cover" />
       </div>
-      <p className="truncate text-xs font-medium">{option.title ?? `옵션 ${label}`}</p>
+      <p className="line-clamp-2 text-xs font-medium">{option.title ?? `옵션 ${label}`}</p>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
         <div className="h-full bg-foreground" style={{ width: `${percent}%` }} />
       </div>

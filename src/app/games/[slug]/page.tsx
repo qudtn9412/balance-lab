@@ -61,12 +61,19 @@ export default async function GamePage({ params }: Params) {
 
   const { data: comments } = await publicSupabase
     .from("comments")
-    .select("id, content, created_at")
+    .select("id, content, nickname, created_at, client_id")
     .eq("game_id", game.id)
     .eq("status", "visible")
     .order("created_at", { ascending: false });
 
   const clientId = await readClientId();
+
+  // 댓글의 client_id는 소유권 판별용일 뿐 클라이언트에 그대로 노출하면 다른 사람의 익명 식별자가
+  // 유출되므로, 여기서 "내 댓글인지" 여부만 boolean으로 계산하고 client_id 자체는 제거한다.
+  const commentsForClient = (comments ?? []).map(({ client_id: commentClientId, ...rest }) => ({
+    ...rest,
+    isMine: clientId !== null && commentClientId === clientId,
+  }));
   let myChoice: "a" | "b" | null = null;
   let liked = false;
   if (clientId) {
@@ -101,6 +108,8 @@ export default async function GamePage({ params }: Params) {
         </div>
       </div>
 
+      <p className="-mt-4 text-xs text-zinc-400">제작자: {game.creator_nickname ?? "익명"}</p>
+
       <VoteSection
         slug={slug}
         optionA={{
@@ -116,7 +125,7 @@ export default async function GamePage({ params }: Params) {
         initialChoice={myChoice}
       />
 
-      <CommentSection slug={slug} initialComments={comments ?? []} />
+      <CommentSection slug={slug} initialComments={commentsForClient} />
     </div>
   );
 }

@@ -186,7 +186,7 @@ function OptionCard({
         )}
       </div>
 
-      <p className="truncate text-center text-sm font-medium">{option.title ?? `옵션 ${label}`}</p>
+      <p className="line-clamp-2 text-center text-sm font-medium">{option.title ?? `옵션 ${label}`}</p>
     </button>
   );
 }

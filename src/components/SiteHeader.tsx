@@ -9,10 +9,9 @@ const navChip =
 const navChipActive = "rounded-full border border-foreground bg-foreground px-3 py-1.5 text-xs font-medium text-background";
 
 export default function SiteHeader({ isAdmin }: { isAdmin: boolean }) {
-  const pathname = usePathname();
   const router = useRouter();
+  const pathname = usePathname();
   const isRankings = pathname.startsWith("/rankings");
-  const isAdminPage = pathname.startsWith("/admin");
   const [loggingOut, setLoggingOut] = useState(false);
 
   async function handleLogout() {
@@ -33,13 +32,6 @@ export default function SiteHeader({ isAdmin }: { isAdmin: boolean }) {
         밸런스랩
       </Link>
       <nav className="flex items-center gap-2 sm:gap-3">
-        <Link
-          href="/admin"
-          aria-current={isAdminPage ? "page" : undefined}
-          className={isAdminPage ? navChipActive : navChip}
-        >
-          관리자
-        </Link>
         <Link
           href="/rankings"
           aria-current={isRankings ? "page" : undefined}

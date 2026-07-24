@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 type GameRow = {
   slug: string;
@@ -52,65 +53,58 @@ export default function PendingReviewList({ games }: { games: GameRow[] }) {
             <div className="flex flex-col gap-1">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={game.option_a_image_url} alt="A" className="aspect-square w-full rounded-md object-cover" />
-              <span className="truncate text-xs">{game.option_a_title ?? "옵션 A"}</span>
+              <span className="line-clamp-2 text-xs">{game.option_a_title ?? "옵션 A"}</span>
             </div>
             <div className="flex flex-col gap-1">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={game.option_b_image_url} alt="B" className="aspect-square w-full rounded-md object-cover" />
-              <span className="truncate text-xs">{game.option_b_title ?? "옵션 B"}</span>
+              <span className="line-clamp-2 text-xs">{game.option_b_title ?? "옵션 B"}</span>
             </div>
           </div>
 
           <div className="flex flex-col items-start gap-2 sm:items-end">
             <span className="text-xs text-zinc-500">신고 {game.reportCount}건</span>
-            <a href={`/games/${game.slug}`} target="_blank" rel="noreferrer" className="text-xs text-zinc-500 underline">
+            <a
+              href={`/games/${game.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium disabled:opacity-40 dark:border-zinc-700"
+            >
               상세 보기
             </a>
             {errorSlug === game.slug && <span className="text-xs text-red-600">처리에 실패했습니다.</span>}
 
-            {confirmingSlug === game.slug ? (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-zinc-500">정말 삭제할까요?</span>
-                <button
-                  type="button"
-                  onClick={() => runAction(game.slug, "delete")}
-                  disabled={pendingAction !== null}
-                  className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
-                >
-                  {pendingAction === `${game.slug}:delete` ? "삭제 중..." : "네, 삭제"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmingSlug(null)}
-                  disabled={pendingAction !== null}
-                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium disabled:opacity-40 dark:border-zinc-700"
-                >
-                  취소
-                </button>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => runAction(game.slug, "restore")}
-                  disabled={pendingAction !== null}
-                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium disabled:opacity-40 dark:border-zinc-700"
-                >
-                  {pendingAction === `${game.slug}:restore` ? "처리 중..." : "복원"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmingSlug(game.slug)}
-                  disabled={pendingAction !== null}
-                  className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 disabled:opacity-40 dark:border-red-900"
-                >
-                  완전 삭제
-                </button>
-              </div>
-            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => runAction(game.slug, "restore")}
+                disabled={pendingAction !== null}
+                className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium disabled:opacity-40 dark:border-zinc-700"
+              >
+                {pendingAction === `${game.slug}:restore` ? "처리 중..." : "복원"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmingSlug(game.slug)}
+                disabled={pendingAction !== null}
+                className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 disabled:opacity-40 dark:border-red-900"
+              >
+                완전 삭제
+              </button>
+            </div>
           </div>
         </div>
       ))}
+
+      <ConfirmDialog
+        open={confirmingSlug !== null}
+        title="게임을 완전히 삭제할까요?"
+        description="삭제하면 이미지와 데이터가 모두 사라지며 되돌릴 수 없습니다."
+        confirmLabel="네, 삭제"
+        pending={pendingAction !== null}
+        onConfirm={() => confirmingSlug && runAction(confirmingSlug, "delete")}
+        onCancel={() => setConfirmingSlug(null)}
+      />
     </div>
   );
 }

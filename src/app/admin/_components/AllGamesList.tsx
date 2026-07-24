@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 type GameRow = {
   slug: string;
@@ -60,12 +61,12 @@ export default function AllGamesList({ games }: { games: GameRow[] }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={game.option_b_image_url} alt="B" className="h-14 w-14 rounded object-cover" />
             </div>
-            <div className="flex flex-col gap-0.5 text-sm">
-              <span className="font-medium">
+            <div className="flex min-w-0 flex-col gap-0.5 text-sm">
+              <span className="line-clamp-2 font-medium">
                 {game.option_a_title ?? "옵션 A"} vs {game.option_b_title ?? "옵션 B"}
               </span>
               <span className="text-xs text-zinc-500">
-                {new Date(game.created_at).toLocaleString("ko-KR")} · ♥ {game.likes_count} · 댓글{" "}
+                {new Date(game.created_at).toLocaleString("ko-KR", { hour12: false })} · ♥ {game.likes_count} · 댓글{" "}
                 {game.comments_count} · 투표 {game.votes_a_count + game.votes_b_count}
               </span>
               {errorSlug === game.slug && <span className="text-xs text-red-600">삭제에 실패했습니다.</span>}
@@ -73,42 +74,35 @@ export default function AllGamesList({ games }: { games: GameRow[] }) {
           </div>
 
           <div className="flex items-center gap-2 sm:justify-end">
-            <a href={`/games/${game.slug}`} target="_blank" rel="noreferrer" className="text-xs text-zinc-500 underline">
+            <a
+              href={`/games/${game.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium disabled:opacity-40 dark:border-zinc-700"
+            >
               상세 보기
             </a>
-            {confirmingSlug === game.slug ? (
-              <>
-                <span className="text-xs text-zinc-500">정말 삭제할까요?</span>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(game.slug)}
-                  disabled={pendingSlug !== null}
-                  className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-40"
-                >
-                  {pendingSlug === game.slug ? "삭제 중..." : "네, 삭제"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmingSlug(null)}
-                  disabled={pendingSlug !== null}
-                  className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium disabled:opacity-40 dark:border-zinc-700"
-                >
-                  취소
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setConfirmingSlug(game.slug)}
-                disabled={pendingSlug !== null}
-                className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 disabled:opacity-40 dark:border-red-900"
-              >
-                삭제
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setConfirmingSlug(game.slug)}
+              disabled={pendingSlug !== null}
+              className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 disabled:opacity-40 dark:border-red-900"
+            >
+              삭제
+            </button>
           </div>
         </div>
       ))}
+
+      <ConfirmDialog
+        open={confirmingSlug !== null}
+        title="게임을 완전히 삭제할까요?"
+        description="삭제하면 이미지와 데이터가 모두 사라지며 되돌릴 수 없습니다."
+        confirmLabel="네, 삭제"
+        pending={pendingSlug !== null}
+        onConfirm={() => confirmingSlug && handleDelete(confirmingSlug)}
+        onCancel={() => setConfirmingSlug(null)}
+      />
     </div>
   );
 }

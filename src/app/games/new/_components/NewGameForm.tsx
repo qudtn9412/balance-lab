@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, type Dispatch, type SetStateAction } from "react";
+import { useState, useEffect, type Dispatch, type SetStateAction } from "react";
 import { useRouter } from "next/navigation";
 import RewardAdButton from "@/components/RewardAdButton";
+import { NICKNAME_MAX_LENGTH, readSavedNickname, saveNickname } from "@/lib/nickname";
 
 type GenStatus = "idle" | "generating" | "done" | "error";
 
@@ -42,10 +43,15 @@ const PROMPT_GUIDE_NOTICES = [
 
 export default function NewGameForm() {
   const router = useRouter();
+  const [nickname, setNickname] = useState("");
   const [optionA, setOptionA] = useState<OptionState>(EMPTY_OPTION);
   const [optionB, setOptionB] = useState<OptionState>(EMPTY_OPTION);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setNickname(readSavedNickname());
+  }, []);
 
   async function handleGenerate(side: "a" | "b") {
     const option = side === "a" ? optionA : optionB;
@@ -81,11 +87,14 @@ export default function NewGameForm() {
     setSubmitting(true);
     setSubmitError(null);
 
+    saveNickname(nickname);
+
     try {
       const res = await fetch("/api/games", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          nickname,
           optionA: {
             prompt: optionA.prompt,
             imageUrl: optionA.status === "done" ? optionA.imageUrl : undefined,
@@ -117,6 +126,20 @@ export default function NewGameForm() {
 
   return (
     <div className="flex flex-col gap-8">
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="flex items-center justify-between">
+          닉네임 (선택)
+          <span className="text-xs text-zinc-400">{nickname.length}/{NICKNAME_MAX_LENGTH}</span>
+        </span>
+        <input
+          value={nickname}
+          onChange={(e) => setNickname(e.target.value)}
+          maxLength={NICKNAME_MAX_LENGTH}
+          placeholder="입력하지 않으면 '익명'으로 표시돼요"
+          className="rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"
+        />
+      </label>
+
       <ul className="flex flex-col gap-1.5 rounded-md border border-dashed border-zinc-300 p-3 text-xs text-zinc-500 dark:border-zinc-700">
         {PROMPT_GUIDE_NOTICES.map((notice) => (
           <li key={notice} className="flex gap-1.5">

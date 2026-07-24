@@ -4,9 +4,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { generateSlug } from "@/lib/slug";
 
 type CreateGameBody = {
+  nickname?: string;
   optionA: { prompt: string; imageUrl?: string; title?: string };
   optionB: { prompt: string; imageUrl?: string; title?: string };
 };
+
+const NICKNAME_MAX_LENGTH = 20;
 
 // TODO: 이미지 생성 provider가 정해지면 제거하고 imageUrl을 다시 필수로 되돌린다.
 // 타이틀(한글 등)은 placehold.co 기본 폰트에 글리프가 없어 깨지므로 라벨(A/B)만 사용한다.
@@ -32,10 +35,12 @@ export async function POST(request: Request) {
 
   const supabase = createAdminClient();
   const slug = generateSlug();
+  const nickname = body.nickname?.trim().slice(0, NICKNAME_MAX_LENGTH) || "익명";
 
   const { error } = await supabase.from("balance_games").insert({
     slug,
     creator_client_id: clientId,
+    creator_nickname: nickname,
     option_a_prompt: body.optionA.prompt,
     option_a_image_url: body.optionA.imageUrl || placeholderImageUrl("A"),
     option_a_title: body.optionA.title ?? null,

@@ -14,6 +14,7 @@ const TABS: { key: Tab; label: string; description: string }[] = [
 
 type GameRow = {
   slug: string;
+  creator_nickname: string | null;
   option_a_image_url: string;
   option_a_title: string | null;
   votes_a_count: number;
@@ -58,7 +59,7 @@ export default async function RankingsPage({
   const { data: games } = await supabase
     .from("balance_games")
     .select(
-      "slug, option_a_image_url, option_a_title, votes_a_count, option_b_image_url, option_b_title, votes_b_count, likes_count, comments_count",
+      "slug, creator_nickname, option_a_image_url, option_a_title, votes_a_count, option_b_image_url, option_b_title, votes_b_count, likes_count, comments_count",
     )
     .eq("status", "published");
 
@@ -103,6 +104,7 @@ export default async function RankingsPage({
                 key={game.slug}
                 slug={game.slug}
                 rank={index + 1}
+                creatorNickname={game.creator_nickname}
                 likesCount={game.likes_count}
                 commentsCount={game.comments_count}
                 optionA={{

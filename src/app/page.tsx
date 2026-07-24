@@ -20,7 +20,7 @@ export default async function Home({
     supabase
       .from("balance_games")
       .select(
-        "slug, option_a_image_url, option_a_title, votes_a_count, option_b_image_url, option_b_title, votes_b_count, likes_count, comments_count",
+        "slug, creator_nickname, option_a_image_url, option_a_title, votes_a_count, option_b_image_url, option_b_title, votes_b_count, likes_count, comments_count",
       )
       .eq("status", "published")
       .order(sort === "popular" ? "likes_count" : "created_at", { ascending: false })
@@ -75,6 +75,7 @@ export default async function Home({
             <GameCard
               key={game.slug}
               slug={game.slug}
+              creatorNickname={game.creator_nickname}
               likesCount={game.likes_count}
               commentsCount={game.comments_count}
               optionA={{

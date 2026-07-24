@@ -19,6 +19,7 @@ export type Database = {
           comments_count: number
           created_at: string
           creator_client_id: string
+          creator_nickname: string
           id: string
           likes_count: number
           option_a_image_url: string
@@ -36,6 +37,7 @@ export type Database = {
           comments_count?: number
           created_at?: string
           creator_client_id: string
+          creator_nickname?: string
           id?: string
           likes_count?: number
           option_a_image_url: string
@@ -53,6 +55,7 @@ export type Database = {
           comments_count?: number
           created_at?: string
           creator_client_id?: string
+          creator_nickname?: string
           id?: string
           likes_count?: number
           option_a_image_url?: string
@@ -75,6 +78,7 @@ export type Database = {
           created_at: string
           game_id: string
           id: string
+          nickname: string
           status: string
         }
         Insert: {
@@ -83,6 +87,7 @@ export type Database = {
           created_at?: string
           game_id: string
           id?: string
+          nickname?: string
           status?: string
         }
         Update: {
@@ -91,6 +96,7 @@ export type Database = {
           created_at?: string
           game_id?: string
           id?: string
+          nickname?: string
           status?: string
         }
         Relationships: [
@@ -271,10 +277,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      add_comment: {
-        Args: { p_client_id: string; p_content: string; p_slug: string }
-        Returns: string
-      }
+      add_comment:
+        | {
+            Args: { p_client_id: string; p_content: string; p_slug: string }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_client_id: string
+              p_content: string
+              p_nickname?: string
+              p_slug: string
+            }
+            Returns: string
+          }
       cast_vote: {
         Args: { p_choice: string; p_slug: string; p_voter_client_id: string }
         Returns: boolean
@@ -286,6 +302,14 @@ export type Database = {
           p_ip_address: string
           p_ip_daily_cap: number
         }
+        Returns: boolean
+      }
+      delete_comment: {
+        Args: { p_client_id: string; p_comment_id: string }
+        Returns: boolean
+      }
+      edit_comment: {
+        Args: { p_client_id: string; p_comment_id: string; p_content: string }
         Returns: boolean
       }
       grant_reward_credit: {

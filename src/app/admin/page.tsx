@@ -56,7 +56,6 @@ export default async function AdminPage() {
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <h2 className="text-xl font-bold">전체 게임 관리</h2>
-          <p className="text-sm text-zinc-500">테스트로 만든 게임 등 필요 없는 데이터를 여기서 바로 삭제할 수 있습니다.</p>
         </div>
         <AllGamesList games={allGames ?? []} />
       </div>
