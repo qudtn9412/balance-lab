@@ -16,6 +16,26 @@ function matchesAny(text: string, patterns: RegExp[]): boolean {
 }
 
 const LLAMA_GUARD_MODEL = "@cf/meta/llama-guard-3-8b";
+const TRANSLATION_MODEL = "@cf/meta/m2m100-1.2b";
+
+/**
+ * Llama Guard 3는 한국어 입력에서 오탐이 훨씬 잦다 (실측: "수영모/수경/삼각팬티 입은 남자"처럼
+ * 평범한 수영복 묘사가 영어로는 safe인데 한국어 원문으로는 S3(성범죄)로 잘못 분류됨).
+ * 그래서 분류 전에 영어로 번역한 뒤 그 번역문을 기준으로 판정한다. 번역이 실패하면
+ * 원문을 그대로 분류에 사용한다(오탐이 늘 수는 있지만 차단 자체가 안 되는 것보다는 낫다).
+ */
+async function translateToEnglish(text: string): Promise<string> {
+  try {
+    const result = await runWorkersAI<{ translated_text?: string }>(TRANSLATION_MODEL, {
+      text,
+      source_lang: "korean",
+      target_lang: "english",
+    });
+    return result.translated_text || text;
+  } catch {
+    return text;
+  }
+}
 
 // Llama Guard 3의 MLCommons 위해 분류 체계 중 우리 서비스(이미지 생성 프롬프트)와
 // 관련 있는 카테고리만 우리 reason으로 매핑한다. 매핑에 없는 카테고리(선거, 지식재산권,
@@ -32,8 +52,9 @@ const CATEGORY_REASON: Record<string, "hate_speech" | "sexual" | "illegal"> = {
 
 async function checkWithLlamaGuard(prompt: string): Promise<TextFilterResult> {
   try {
+    const englishPrompt = await translateToEnglish(prompt);
     const result = await runWorkersAI<{ response?: string }>(LLAMA_GUARD_MODEL, {
-      messages: [{ role: "user", content: prompt }],
+      messages: [{ role: "user", content: englishPrompt }],
     });
 
     const lines = (result.response ?? "")

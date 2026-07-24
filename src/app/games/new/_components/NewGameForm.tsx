@@ -34,10 +34,11 @@ async function extractErrorMessage(res: Response): Promise<string> {
   return `요청에 실패했습니다 (${res.status})`;
 }
 
-// TODO: 이미지 생성 기능(IMAGE_GENERATION_ENABLED)을 다시 켜면 이 문구와 함께
-// "이미지 생성 없이는 등록 불가" 쪽으로 canSubmit을 되돌릴지 검토한다.
-const GENERATION_PAUSED_NOTICE =
-  "이미지 생성 기능은 테스트 기간 동안 잠시 꺼져 있습니다. 지금은 프롬프트/타이틀만으로 등록해도 플레이스홀더 이미지로 카드가 만들어집니다.";
+const PROMPT_GUIDE_NOTICES = [
+  "혐오·차별적이거나 선정적인 이미지는 생성되지 않아요.",
+  "특정 연예인 등 실존 인물을 지칭하는 프롬프트는 초상권 보호를 위해 검열에 걸려 생성이 제한될 수 있어요.",
+  "원하는 결과를 얻으려면 옷차림, 배경, 분위기 등을 최대한 구체적으로 적어주세요.",
+];
 
 export default function NewGameForm() {
   const router = useRouter();
@@ -116,9 +117,16 @@ export default function NewGameForm() {
 
   return (
     <div className="flex flex-col gap-8">
-      <p className="rounded-md border border-dashed border-zinc-300 p-3 text-xs text-zinc-500 dark:border-zinc-700">
-        {GENERATION_PAUSED_NOTICE}
-      </p>
+      <ul className="flex flex-col gap-1.5 rounded-md border border-dashed border-zinc-300 p-3 text-xs text-zinc-500 dark:border-zinc-700">
+        {PROMPT_GUIDE_NOTICES.map((notice) => (
+          <li key={notice} className="flex gap-1.5">
+            <span aria-hidden className="text-zinc-400">
+              ·
+            </span>
+            {notice}
+          </li>
+        ))}
+      </ul>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <OptionEditor label="옵션 A" option={optionA} onChange={setOptionA} onGenerate={() => handleGenerate("a")} />

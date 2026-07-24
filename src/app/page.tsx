@@ -4,16 +4,29 @@ import GameCard from "@/components/GameCard";
 
 const FEED_PAGE_SIZE = 30;
 
-export default async function Home() {
+type Sort = "new" | "popular";
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ sort?: string }>;
+}) {
+  const { sort: rawSort } = await searchParams;
+  const sort: Sort = rawSort === "popular" ? "popular" : "new";
+
   const supabase = createPublicClient();
-  const { data: games } = await supabase
-    .from("balance_games")
-    .select(
-      "slug, option_a_image_url, option_a_title, votes_a_count, option_b_image_url, option_b_title, votes_b_count, likes_count, comments_count",
-    )
-    .eq("status", "published")
-    .order("created_at", { ascending: false })
-    .limit(FEED_PAGE_SIZE);
+
+  const [{ data: games }, { count: totalCount }] = await Promise.all([
+    supabase
+      .from("balance_games")
+      .select(
+        "slug, option_a_image_url, option_a_title, votes_a_count, option_b_image_url, option_b_title, votes_b_count, likes_count, comments_count",
+      )
+      .eq("status", "published")
+      .order(sort === "popular" ? "likes_count" : "created_at", { ascending: false })
+      .limit(FEED_PAGE_SIZE),
+    supabase.from("balance_games").select("*", { count: "exact", head: true }).eq("status", "published"),
+  ]);
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
@@ -24,9 +37,35 @@ export default async function Home() {
         </p>
         <Link
           href="/games/new"
-          className="rounded-full bg-foreground px-6 py-3 font-medium text-background"
+          className="rounded-full bg-foreground px-6 py-3 font-medium text-background transition hover:opacity-90"
         >
           밸런스게임 만들기
+        </Link>
+        {typeof totalCount === "number" && totalCount > 0 && (
+          <p className="text-xs text-zinc-400">지금까지 {totalCount}개의 밸런스게임이 등록됐어요</p>
+        )}
+      </div>
+
+      <div className="flex gap-2 border-b border-zinc-200 dark:border-zinc-800">
+        <Link
+          href="/"
+          className={
+            sort === "new"
+              ? "border-b-2 border-foreground px-3 py-2 text-sm font-medium text-foreground"
+              : "px-3 py-2 text-sm font-medium text-zinc-500 hover:text-foreground"
+          }
+        >
+          최신순
+        </Link>
+        <Link
+          href="/?sort=popular"
+          className={
+            sort === "popular"
+              ? "border-b-2 border-foreground px-3 py-2 text-sm font-medium text-foreground"
+              : "px-3 py-2 text-sm font-medium text-zinc-500 hover:text-foreground"
+          }
+        >
+          인기순
         </Link>
       </div>
 
@@ -52,7 +91,11 @@ export default async function Home() {
           ))}
         </div>
       ) : (
-        <p className="text-center text-sm text-zinc-500">아직 등록된 밸런스게임이 없습니다. 첫 번째로 만들어보세요!</p>
+        <div className="flex min-h-[240px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-300 text-center dark:border-zinc-700">
+          <span className="text-2xl">🎲</span>
+          <p className="text-sm font-medium">아직 등록된 밸런스게임이 없습니다</p>
+          <p className="text-xs text-zinc-500">첫 번째로 만들어보세요!</p>
+        </div>
       )}
     </div>
   );
