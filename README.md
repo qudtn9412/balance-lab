@@ -1,3 +1,5 @@
+# BalanceLab
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 > **Note**: `npm run dev` uses `next dev --webpack` instead of the Turbopack default. In this Next.js version, Turbopack's dev server fails to set cookies from `src/proxy.ts` (`adapterFn is not a function`), which breaks the anonymous `client_id` cookie this app depends on. `next build`/`next start` are unaffected (Turbopack works fine there) — only local dev needs webpack until this is fixed upstream.
