@@ -39,3 +39,26 @@ export async function runWorkersAI<T = unknown>(model: string, body: unknown): P
 
   return data.result;
 }
+
+const TRANSLATION_MODEL = "@cf/meta/m2m100-1.2b";
+const HANGUL_PATTERN = /[가-힣ᄀ-ᇿ㄰-㆏]/;
+
+/**
+ * 한글이 섞인 텍스트를 영어로 번역한다. FLUX 이미지 생성 모델과 Llama Guard 분류기가 전부
+ * 영어 중심으로 학습돼 있어서, 한글 원문을 그대로 넣으면 의미와 무관한 이미지가 나오거나
+ * (이미지 생성) 오탐이 잦아진다(모더레이션). 한글이 없으면 API 호출 없이 원문을 그대로 쓴다.
+ * 번역이 실패하면 원문을 그대로 반환한다(번역 인프라 장애로 전체 기능이 막히지 않도록).
+ */
+export async function translateToEnglish(text: string): Promise<string> {
+  if (!HANGUL_PATTERN.test(text)) return text;
+  try {
+    const result = await runWorkersAI<{ translated_text?: string }>(TRANSLATION_MODEL, {
+      text,
+      source_lang: "korean",
+      target_lang: "english",
+    });
+    return result.translated_text || text;
+  } catch {
+    return text;
+  }
+}

@@ -1,5 +1,5 @@
 import "server-only";
-import { runWorkersAI } from "@/lib/cloudflare-ai";
+import { runWorkersAI, translateToEnglish } from "@/lib/cloudflare-ai";
 import { uploadImageToR2 } from "@/lib/storage/r2";
 
 export type GenerateImageResult = {
@@ -19,7 +19,10 @@ const ESTIMATED_COST_CENTS = 0.3;
  * 어댑터 뒤로 숨겨서 나머지 코드(route handler 등)가 provider 교체에 영향받지 않게 한다.
  */
 export async function generateImage(prompt: string): Promise<GenerateImageResult> {
-  const result = await runWorkersAI<{ image?: string }>(MODEL, { prompt });
+  // FLUX는 영어 중심으로 학습된 모델이라 한글 프롬프트를 넣으면 의미와 무관한 이미지가 나온다
+  // (실측: "녹색 사과" → 한 사과와 무관한 골목 사진). 생성 직전에 영어로 번역해서 넘긴다.
+  const englishPrompt = await translateToEnglish(prompt);
+  const result = await runWorkersAI<{ image?: string }>(MODEL, { prompt: englishPrompt });
 
   if (!result.image) {
     throw new Error("Cloudflare Workers AI generation failed: no image returned");
