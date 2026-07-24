@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+html {
+  /* 세로 스크롤바가 생겼다 사라졌다 하면서 페이지 너비가 미세하게 흔들리는 것을 막는다
+     (탭에 따라 콘텐츠 높이가 달라 스크롤바 유무가 바뀌는 랭킹 페이지 등에서 특히 중요) */
+  scrollbar-gutter: stable;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  /* 한글은 띄어쓰기 단위로만 줄바꿈되도록 한다 (단어 중간이 잘리는 것 방지) */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
