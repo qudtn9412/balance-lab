@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { readClientId } from "@/lib/client-id";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateSlug } from "@/lib/slug";
+import { containsBannedKeywords } from "@/lib/moderation/text-filter";
 
 type CreateGameBody = {
   nickname?: string;
@@ -33,9 +34,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "both options are required" }, { status: 400 });
   }
 
+  const nickname = body.nickname?.trim().slice(0, NICKNAME_MAX_LENGTH) || "익명";
+  const textsToCheck = [nickname, body.optionA.title, body.optionB.title].filter(Boolean) as string[];
+  if (textsToCheck.some((text) => containsBannedKeywords(text).blocked)) {
+    return NextResponse.json({ error: "닉네임 또는 타이틀에 부적절한 표현이 포함되어 있어요." }, { status: 422 });
+  }
+
   const supabase = createAdminClient();
   const slug = generateSlug();
-  const nickname = body.nickname?.trim().slice(0, NICKNAME_MAX_LENGTH) || "익명";
 
   const { error } = await supabase.from("balance_games").insert({
     slug,

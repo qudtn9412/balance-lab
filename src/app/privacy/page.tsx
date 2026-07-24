@@ -31,7 +31,10 @@ export default function PrivacyPage() {
             </li>
             <li>
               <strong className="text-foreground">이용자가 직접 입력한 정보</strong>: 이미지 생성 프롬프트,
-              카드 타이틀, 댓글 내용. 입력 즉시 서비스 내에 공개적으로 게시됩니다.
+              카드 타이틀, 닉네임, 댓글 내용. 입력 즉시 서비스 내에 공개적으로 게시됩니다. 닉네임은 입력하지
+              않아도 이용에 제한이 없으며, 미입력 시 &ldquo;익명&rdquo;으로 표시됩니다. 재입력 편의를 위해
+              브라우저 로컬 저장소(local storage)에 저장될 수 있으며, 이는 기기에만 저장되고 서비스 서버로는
+              게시 시점에만 전송됩니다.
             </li>
             <li>
               <strong className="text-foreground">AI로 생성된 이미지</strong>: 이용자가 입력한 프롬프트로 생성되어

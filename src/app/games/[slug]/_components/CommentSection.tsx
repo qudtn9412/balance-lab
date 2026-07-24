@@ -181,20 +181,20 @@ export default function CommentSection({
         {comments.map((comment) => (
           <li key={comment.id} className="rounded-md border border-zinc-200 p-3 text-sm dark:border-zinc-800">
             <div className="mb-1 flex items-center justify-between gap-2">
-              <span className="text-xs font-medium text-zinc-500">{comment.nickname}</span>
+              <span className="min-w-0 truncate text-xs font-medium text-zinc-500">{comment.nickname}</span>
               {comment.isMine && editingId !== comment.id && (
-                <div className="flex gap-2">
+                <div className="flex shrink-0 gap-1.5">
                   <button
                     type="button"
                     onClick={() => startEditing(comment)}
-                    className="text-xs text-zinc-400 underline hover:text-foreground"
+                    className="rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium dark:border-zinc-700"
                   >
                     수정
                   </button>
                   <button
                     type="button"
                     onClick={() => setDeletingId(comment.id)}
-                    className="text-xs text-zinc-400 underline hover:text-red-600"
+                    className="rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium text-red-600 dark:border-red-900"
                   >
                     삭제
                   </button>
@@ -232,7 +232,7 @@ export default function CommentSection({
                 </div>
               </div>
             ) : (
-              comment.content
+              <p className="whitespace-pre-wrap break-words">{comment.content}</p>
             )}
           </li>
         ))}

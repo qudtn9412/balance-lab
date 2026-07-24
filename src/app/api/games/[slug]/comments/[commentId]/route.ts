@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readClientId } from "@/lib/client-id";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { containsBannedKeywords } from "@/lib/moderation/text-filter";
 
 type Params = { params: Promise<{ slug: string; commentId: string }> };
 
@@ -14,6 +15,9 @@ export async function PATCH(request: Request, { params }: Params) {
   const { content } = (await request.json()) as { content?: string };
   if (!content || content.trim().length === 0 || content.length > 300) {
     return NextResponse.json({ error: "invalid content" }, { status: 400 });
+  }
+  if (containsBannedKeywords(content).blocked) {
+    return NextResponse.json({ error: "댓글에 부적절한 표현이 포함되어 있어요." }, { status: 422 });
   }
 
   const supabase = createAdminClient();

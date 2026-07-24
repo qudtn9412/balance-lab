@@ -62,7 +62,7 @@ export default function AllGamesList({ games }: { games: GameRow[] }) {
               <img src={game.option_b_image_url} alt="B" className="h-14 w-14 rounded object-cover" />
             </div>
             <div className="flex min-w-0 flex-col gap-0.5 text-sm">
-              <span className="line-clamp-2 font-medium">
+              <span className="line-clamp-2 break-words font-medium">
                 {game.option_a_title ?? "옵션 A"} vs {game.option_b_title ?? "옵션 B"}
               </span>
               <span className="text-xs text-zinc-500">

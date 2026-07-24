@@ -62,6 +62,19 @@ async function checkWithLlamaGuard(prompt: string): Promise<TextFilterResult> {
 }
 
 /**
+ * 정규식 금칙어 1차 필터만 동기적으로, API 호출 없이(무료로) 적용한다. 닉네임·댓글·카드 타이틀처럼
+ * 이미지 생성과 달리 일일 한도로 호출량이 제한되지 않는 입력에 Llama Guard(LLM 호출)까지 매번
+ * 태우면 트래픽에 비례해 비용이 무한정 늘어날 수 있어(CLAUDE.md 비용 원칙), 여기서는 명백한
+ * 위반만 걸러내고 더 폭넓은 판별은 신고 기능으로 보완한다.
+ */
+export function containsBannedKeywords(text: string): TextFilterResult {
+  if (matchesAny(text, HATE_PATTERNS)) return { blocked: true, reason: "hate_speech" };
+  if (matchesAny(text, SEXUAL_PATTERNS)) return { blocked: true, reason: "sexual" };
+  if (matchesAny(text, ILLEGAL_PATTERNS)) return { blocked: true, reason: "illegal" };
+  return { blocked: false };
+}
+
+/**
  * 이미지 생성 API를 호출하기 전, 프롬프트 텍스트 단계에서 1차 차단한다.
  *   1) 정규식 금칙어 필터로 명백한 위반을 무료/즉시 차단
  *   2) 여기서 걸리지 않으면 Cloudflare Workers AI의 Llama Guard 3로 더 폭넓게 판별
@@ -69,9 +82,8 @@ async function checkWithLlamaGuard(prompt: string): Promise<TextFilterResult> {
  * 별도 리스트·로직이 필요해서다.
  */
 export async function checkPromptText(prompt: string): Promise<TextFilterResult> {
-  if (matchesAny(prompt, HATE_PATTERNS)) return { blocked: true, reason: "hate_speech" };
-  if (matchesAny(prompt, SEXUAL_PATTERNS)) return { blocked: true, reason: "sexual" };
-  if (matchesAny(prompt, ILLEGAL_PATTERNS)) return { blocked: true, reason: "illegal" };
+  const keywordResult = containsBannedKeywords(prompt);
+  if (keywordResult.blocked) return keywordResult;
 
   return checkWithLlamaGuard(prompt);
 }

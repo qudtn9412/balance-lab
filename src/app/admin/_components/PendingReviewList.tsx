@@ -53,12 +53,12 @@ export default function PendingReviewList({ games }: { games: GameRow[] }) {
             <div className="flex flex-col gap-1">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={game.option_a_image_url} alt="A" className="aspect-square w-full rounded-md object-cover" />
-              <span className="line-clamp-2 text-xs">{game.option_a_title ?? "옵션 A"}</span>
+              <span className="line-clamp-2 break-words text-xs">{game.option_a_title ?? "옵션 A"}</span>
             </div>
             <div className="flex flex-col gap-1">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={game.option_b_image_url} alt="B" className="aspect-square w-full rounded-md object-cover" />
-              <span className="line-clamp-2 text-xs">{game.option_b_title ?? "옵션 B"}</span>
+              <span className="line-clamp-2 break-words text-xs">{game.option_b_title ?? "옵션 B"}</span>
             </div>
           </div>
 
