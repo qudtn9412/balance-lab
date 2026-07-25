@@ -7,9 +7,11 @@ export const POLICY = {
   FREE_GENERATIONS_PER_DAY: 2,
   /**
    * IP당 하루 이미지 생성 상한 (client_id 쿠키 초기화로 개인 한도를 우회하는 것을 막는 안전망).
-   * 사무실/가정 등 공유 IP의 정상 사용자를 막지 않도록 개인 한도보다 넉넉하게 잡는다.
+   * Cloudflare Workers AI 무료 뉴런 한도(하루 10k)가 계정 전체 공유 한도라 개인당 한도를
+   * 넉넉하게 열어두면 소수의 어뷰징만으로도 전체 무료 한도가 금방 소진될 수 있어,
+   * 공유 IP 환경(사무실 등)을 다소 희생하더라도 낮게(10) 잡는다.
    */
-  IP_DAILY_GENERATION_CAP: 50,
+  IP_DAILY_GENERATION_CAP: 10,
   /** 리워드 광고 시청 1회당 지급되는 추가 생성 장수 */
   BONUS_GENERATIONS_PER_AD: 1,
   /** client_id당 하루 리워드 광고 시청 가능 횟수 상한 */
