@@ -6,6 +6,7 @@ import { checkPromptText } from "@/lib/moderation/text-filter";
 import { containsRealPersonReference } from "@/lib/moderation/celebrity-block";
 import { checkImageNsfw } from "@/lib/moderation/nsfw-check";
 import { generateImage } from "@/lib/image-gen/provider";
+import { isAdminAuthenticated } from "@/lib/admin-auth";
 
 const BLOCK_REASON_MESSAGE: Record<string, string> = {
   hate_speech: "혐오·차별적인 내용으로 판단되어 이미지를 생성할 수 없어요. 프롬프트를 바꿔서 다시 시도해주세요.",
@@ -54,12 +55,16 @@ export async function POST(request: Request) {
     );
   }
 
-  const allowed = await tryConsumeGenerationCredit(clientId, getClientIp(request));
-  if (!allowed) {
-    return NextResponse.json(
-      { error: "오늘의 무료 생성 횟수를 다 사용했어요. 광고를 보면 추가로 생성할 수 있어요." },
-      { status: 429 },
-    );
+  // 관리자(비밀번호로 인증된 세션)는 반복 테스트를 위해 일일 생성 한도를 적용하지 않는다.
+  const isAdmin = await isAdminAuthenticated();
+  if (!isAdmin) {
+    const allowed = await tryConsumeGenerationCredit(clientId, getClientIp(request));
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "오늘의 무료 생성 횟수를 다 사용했어요. 광고를 보면 추가로 생성할 수 있어요." },
+        { status: 429 },
+      );
+    }
   }
 
   const { imageUrl, costCents } = await generateImage(prompt);
