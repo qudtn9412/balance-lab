@@ -1,3 +1,4 @@
+import BackButton from "@/components/BackButton";
 import NewGameForm from "./_components/NewGameForm";
 
 /**
@@ -7,6 +8,7 @@ import NewGameForm from "./_components/NewGameForm";
 export default function NewGamePage() {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-12">
+      <BackButton />
       <h1 className="text-2xl font-bold">밸런스게임 만들기</h1>
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
         두 개의 프롬프트로 이미지를 생성해 1:1 밸런스게임 카드를 만듭니다.
