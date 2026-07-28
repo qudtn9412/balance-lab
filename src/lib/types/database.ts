@@ -133,6 +133,60 @@ export type Database = {
         }
         Relationships: []
       }
+      board_comments: {
+        Row: {
+          client_id: string
+          content: string
+          created_at: string
+          id: string
+          nickname: string
+          status: string
+        }
+        Insert: {
+          client_id: string
+          content: string
+          created_at?: string
+          id?: string
+          nickname?: string
+          status?: string
+        }
+        Update: {
+          client_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          nickname?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      feedback: {
+        Row: {
+          client_id: string
+          content: string
+          created_at: string
+          id: string
+          nickname: string
+          status: string
+        }
+        Insert: {
+          client_id: string
+          content: string
+          created_at?: string
+          id?: string
+          nickname?: string
+          status?: string
+        }
+        Update: {
+          client_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          nickname?: string
+          status?: string
+        }
+        Relationships: []
+      }
       image_generation_jobs: {
         Row: {
           client_id: string
@@ -237,6 +291,21 @@ export type Database = {
           reporter_client_id?: string
           target_id?: string
           target_type?: string
+        }
+        Relationships: []
+      }
+      site_visits: {
+        Row: {
+          client_id: string
+          visit_date: string
+        }
+        Insert: {
+          client_id: string
+          visit_date?: string
+        }
+        Update: {
+          client_id?: string
+          visit_date?: string
         }
         Relationships: []
       }

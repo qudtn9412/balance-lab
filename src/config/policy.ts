@@ -24,4 +24,6 @@ export const POLICY = {
   RANKING_MIN_VOTES: 20,
   /** 신고 누적 시 자동 비공개 처리되는 임계치 */
   AUTO_HIDE_REPORT_THRESHOLD: 5,
+  /** client_id당 하루 건의/불편 게시판 제출 가능 횟수 (도배 방지용 상한) */
+  FEEDBACK_MAX_PER_DAY: 10,
 } as const;

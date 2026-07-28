@@ -4,6 +4,9 @@ export default function SiteFooter() {
   return (
     <footer className="flex flex-col items-center gap-2 border-t border-zinc-200 px-6 py-6 text-center text-xs text-zinc-400 dark:border-zinc-800">
       <nav className="flex gap-4">
+        <Link href="/feedback" className="hover:text-foreground">
+          건의하기
+        </Link>
         <Link href="/terms" className="hover:text-foreground">
           이용약관
         </Link>

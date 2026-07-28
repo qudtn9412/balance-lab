@@ -1,16 +1,13 @@
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { POLICY } from "@/config/policy";
 import AdminLoginForm from "./_components/AdminLoginForm";
 import PendingReviewList from "./_components/PendingReviewList";
 import AllGamesList from "./_components/AllGamesList";
 import StatsPanel from "./_components/StatsPanel";
-
-const TREND_DAYS = 7;
+import FeedbackList from "./_components/FeedbackList";
+import BoardCommentsAdminList from "./_components/BoardCommentsAdminList";
 
 // usage_date/created_at 비교는 Supabase 기본 타임존(UTC) 기준 "오늘"로 계산한다.
-// 방문자 트래픽(페이지뷰) 자체는 이 DB에 없는 정보라 다루지 않고, 실제로 생성/투표 등
-// 행동으로 이어진 사용자 수만 집계한다 — 순수 트래픽은 Vercel Analytics/GA 쪽 몫이다.
 function toDateStr(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
@@ -25,63 +22,22 @@ export default async function AdminPage() {
   const now = new Date();
   const todayStr = toDateStr(now);
   const todayStartIso = `${todayStr}T00:00:00.000Z`;
-  const trendStartStr = toDateStr(new Date(now.getTime() - (TREND_DAYS - 1) * 86_400_000));
-  const trendStartIso = `${trendStartStr}T00:00:00.000Z`;
 
-  const [
-    { data: genRows },
-    { data: ipRows },
-    { count: gamesCreatedToday },
-    { count: votesCastToday },
-    { data: jobRows },
-    { data: trendGameRows },
-    { count: totalGames },
-    { count: totalVotes },
-  ] = await Promise.all([
-    supabase.from("generation_usage").select("client_id, consumed, granted_bonus, ads_watched").eq("usage_date", todayStr),
-    supabase.from("ip_generation_usage").select("ip_address, consumed").eq("usage_date", todayStr),
+  const [{ data: genRows }, { count: visitorsToday }, { count: gamesCreatedToday }, { count: totalGames }] = await Promise.all([
+    supabase.from("generation_usage").select("consumed, ads_watched").eq("usage_date", todayStr),
+    supabase.from("site_visits").select("*", { count: "exact", head: true }).eq("visit_date", todayStr),
     supabase.from("balance_games").select("*", { count: "exact", head: true }).gte("created_at", todayStartIso),
-    supabase.from("votes").select("*", { count: "exact", head: true }).gte("created_at", todayStartIso),
-    supabase.from("image_generation_jobs").select("status").gte("created_at", todayStartIso),
-    supabase.from("balance_games").select("created_at").gte("created_at", trendStartIso),
     supabase.from("balance_games").select("*", { count: "exact", head: true }),
-    supabase.from("votes").select("*", { count: "exact", head: true }),
   ]);
-
-  const jobStatusCounts: Record<string, number> = {};
-  for (const job of jobRows ?? []) {
-    jobStatusCounts[job.status] = (jobStatusCounts[job.status] ?? 0) + 1;
-  }
-
-  const trendBuckets = new Map<string, number>();
-  for (let i = 0; i < TREND_DAYS; i++) {
-    trendBuckets.set(toDateStr(new Date(now.getTime() - i * 86_400_000)), 0);
-  }
-  for (const game of trendGameRows ?? []) {
-    const day = game.created_at.slice(0, 10);
-    if (trendBuckets.has(day)) trendBuckets.set(day, (trendBuckets.get(day) ?? 0) + 1);
-  }
-  const trend = [...trendBuckets.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, count]) => ({ date, count }));
-
-  const topGenerators = [...(genRows ?? [])]
-    .sort((a, b) => b.consumed - a.consumed)
-    .slice(0, 10)
-    .map((row) => ({ clientId: row.client_id, consumed: row.consumed, adsWatched: row.ads_watched }));
 
   const statsProps = {
     today: {
+      visitors: visitorsToday ?? 0,
       generated: (genRows ?? []).reduce((sum, r) => sum + r.consumed, 0),
-      activeClients: (genRows ?? []).length,
       adsWatched: (genRows ?? []).reduce((sum, r) => sum + r.ads_watched, 0),
-      uniqueIPs: (ipRows ?? []).length,
-      ipCapHits: (ipRows ?? []).filter((r) => r.consumed >= POLICY.IP_DAILY_GENERATION_CAP).length,
       gamesCreated: gamesCreatedToday ?? 0,
-      votesCast: votesCastToday ?? 0,
-      jobStatusCounts,
     },
-    topGenerators,
-    trend,
-    totals: { games: totalGames ?? 0, votes: totalVotes ?? 0 },
+    totalGames: totalGames ?? 0,
   };
   const { data: games } = await supabase
     .from("balance_games")
@@ -116,14 +72,34 @@ export default async function AdminPage() {
     .neq("status", "pending_review")
     .order("created_at", { ascending: false });
 
+  const { data: feedbackItems } = await supabase
+    .from("feedback")
+    .select("id, nickname, content, status, created_at")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  const { data: boardComments } = await supabase
+    .from("board_comments")
+    .select("id, nickname, content, created_at")
+    .eq("status", "visible")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-10 px-6 py-12">
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold">통계</h1>
-          <p className="text-sm text-zinc-500">방문자(페이지뷰) 자체는 별도 트래픽 분석 도구가 필요하고, 아래는 이 서비스 DB에 있는 생성/투표/광고 데이터 기준입니다.</p>
         </div>
         <StatsPanel {...statsProps} />
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-xl font-bold">건의함</h2>
+          <p className="text-sm text-zinc-500">사용자가 보낸 비공개 건의/불편사항입니다.</p>
+        </div>
+        <FeedbackList items={feedbackItems ?? []} />
       </div>
 
       <div className="flex flex-col gap-4">
@@ -139,6 +115,14 @@ export default async function AdminPage() {
           <h2 className="text-xl font-bold">전체 게임 관리</h2>
         </div>
         <AllGamesList games={allGames ?? []} />
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-xl font-bold">소통게시판 관리</h2>
+          <p className="text-sm text-zinc-500">신고 체계가 없는 게시판이라 삭제가 유일한 모더레이션 수단입니다.</p>
+        </div>
+        <BoardCommentsAdminList items={boardComments ?? []} />
       </div>
     </div>
   );
