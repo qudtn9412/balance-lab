@@ -7,9 +7,9 @@ import GameCard from "@/components/GameCard";
 type Tab = "close" | "likes" | "comments";
 
 const TABS: { key: Tab; label: string; description: string }[] = [
-  { key: "close", label: "가장 어려운 밸런스", description: `투표가 ${POLICY.RANKING_MIN_VOTES}표 이상 모인 게임 중 득표율이 50:50에 가장 가까운 순서` },
-  { key: "likes", label: "좋아요순", description: "좋아요를 가장 많이 받은 순서" },
-  { key: "comments", label: "댓글 많은순", description: "댓글이 가장 많이 달린 순서" },
+  { key: "close", label: "🔥 찐 밸런스", description: `투표가 ${POLICY.RANKING_MIN_VOTES}표 이상 모인 게임 중 득표율이 50:50에 가장 가까운, 진짜 고민되는 밸런스` },
+  { key: "likes", label: "💥 터진 밸런스", description: "좋아요를 가장 많이 받은, 다들 좋아한 밸런스" },
+  { key: "comments", label: "💬 댓글 폭발", description: "댓글이 가장 많이 달려서 말 많았던 밸런스" },
 ];
 
 type GameRow = {
