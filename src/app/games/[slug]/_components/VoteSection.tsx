@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ResultShareCard from "./ResultShareCard";
 
 type Choice = "a" | "b";
 
@@ -119,6 +120,8 @@ export default function VoteSection({
           {submitting ? "제출 중..." : pending ? "이걸로 확정! 🔥" : "먼저 하나를 골라주세요"}
         </button>
       )}
+
+      {choice && <ResultShareCard slug={slug} choice={choice} />}
 
       {error && <p className="text-center text-sm text-red-600">{error}</p>}
     </div>
