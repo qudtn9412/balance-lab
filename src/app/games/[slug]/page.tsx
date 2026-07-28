@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createPublicClient } from "@/lib/supabase/public";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -8,6 +9,7 @@ import VoteSection from "./_components/VoteSection";
 import CommentSection from "./_components/CommentSection";
 import ReportButton from "./_components/ReportButton";
 import LikeButton from "./_components/LikeButton";
+import ShareButton from "./_components/ShareButton";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -104,11 +106,21 @@ export default async function GamePage({ params }: Params) {
         <BackButton />
         <div className="flex items-center gap-2">
           <LikeButton slug={slug} initialLiked={liked} initialCount={game.likes_count} />
+          <ShareButton title={`${game.option_a_title ?? "옵션 A"} vs ${game.option_b_title ?? "옵션 B"}`} />
           <ReportButton slug={slug} />
         </div>
       </div>
 
-      <p className="-mt-4 text-xs text-zinc-400">제작자: {game.creator_nickname ?? "익명"}</p>
+      <p className="-mt-4 text-xs text-zinc-400">
+        제작자:{" "}
+        {game.creator_nickname ? (
+          <Link href={`/?creator=${encodeURIComponent(game.creator_nickname)}`} className="underline hover:text-foreground">
+            {game.creator_nickname}
+          </Link>
+        ) : (
+          "익명"
+        )}
+      </p>
 
       <VoteSection
         slug={slug}
