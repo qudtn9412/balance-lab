@@ -13,7 +13,7 @@ export default function SiteHeader({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();
   const isRankings = pathname.startsWith("/rankings");
   const isMyGames = pathname.startsWith("/my-games");
-  const isBoard = pathname.startsWith("/board");
+  const isFeedback = pathname.startsWith("/feedback");
   const [loggingOut, setLoggingOut] = useState(false);
 
   async function handleLogout() {
@@ -42,11 +42,11 @@ export default function SiteHeader({ isAdmin }: { isAdmin: boolean }) {
           랭킹
         </Link>
         <Link
-          href="/board"
-          aria-current={isBoard ? "page" : undefined}
-          className={isBoard ? navChipActive : navChip}
+          href="/feedback"
+          aria-current={isFeedback ? "page" : undefined}
+          className={isFeedback ? navChipActive : navChip}
         >
-          소통게시판
+          불편접수하기
         </Link>
         <Link
           href="/my-games"
