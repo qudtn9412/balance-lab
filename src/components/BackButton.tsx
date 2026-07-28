@@ -21,7 +21,7 @@ export default function BackButton({ fallbackHref = "/" }: { fallbackHref?: stri
     <button
       type="button"
       onClick={handleClick}
-      className="flex items-center gap-1 rounded-full border border-zinc-300 px-4 py-1.5 text-sm font-medium text-zinc-700 transition hover:border-foreground hover:text-foreground dark:border-zinc-700 dark:text-zinc-300"
+      className="inline-flex w-fit shrink-0 self-start items-center gap-1 rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:border-foreground hover:text-foreground dark:border-zinc-700 dark:text-zinc-300"
     >
       ← 목록으로
     </button>

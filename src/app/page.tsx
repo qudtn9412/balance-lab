@@ -7,6 +7,10 @@ const FEED_PAGE_SIZE = 30;
 
 type Sort = "new" | "popular";
 
+function escapeLikePattern(value: string): string {
+  return value.replace(/[%_\\]/g, (c) => `\\${c}`);
+}
+
 function buildHref(sort: Sort, creator?: string): string {
   const params = new URLSearchParams();
   if (sort === "popular") params.set("sort", "popular");
@@ -36,8 +40,9 @@ export default async function Home({
   let countQuery = supabase.from("balance_games").select("*", { count: "exact", head: true }).eq("status", "published");
 
   if (creator) {
-    gamesQuery = gamesQuery.eq("creator_nickname", creator);
-    countQuery = countQuery.eq("creator_nickname", creator);
+    const pattern = `%${escapeLikePattern(creator)}%`;
+    gamesQuery = gamesQuery.ilike("creator_nickname", pattern);
+    countQuery = countQuery.ilike("creator_nickname", pattern);
   }
 
   const [{ data: games }, { count: totalCount }] = await Promise.all([gamesQuery, countQuery]);

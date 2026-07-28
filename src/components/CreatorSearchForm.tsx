@@ -18,7 +18,7 @@ export default function CreatorSearchForm({ initialValue }: { initialValue?: str
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="제작자 닉네임으로 검색"
+        placeholder="닉네임으로 검색"
         className="w-full max-w-[200px] rounded-full border border-zinc-300 px-3 py-1.5 text-xs focus:border-foreground focus:outline-none dark:border-zinc-700 dark:bg-transparent"
       />
       <button
