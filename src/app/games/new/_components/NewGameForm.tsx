@@ -4,6 +4,7 @@ import { useState, useEffect, type Dispatch, type SetStateAction } from "react";
 import { useRouter } from "next/navigation";
 import RewardAdButton from "@/components/RewardAdButton";
 import { NICKNAME_MAX_LENGTH, readSavedNickname, saveNickname } from "@/lib/nickname";
+import { POLICY } from "@/config/policy";
 
 type GenStatus = "idle" | "generating" | "done" | "error";
 
@@ -126,6 +127,10 @@ export default function NewGameForm() {
 
   return (
     <div className="flex flex-col gap-8">
+      <p className="rounded-md bg-zinc-100 px-3 py-2 text-sm text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400">
+        🎨 오늘 무료로 이미지 {POLICY.FREE_GENERATIONS_PER_DAY}장을 생성할 수 있어요 — 밸런스게임 1개를 만들기에 딱 맞는 양이에요.
+      </p>
+
       <label className="flex flex-col gap-1 text-sm">
         <span className="flex items-center justify-between">
           닉네임 (선택)
