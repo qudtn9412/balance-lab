@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRequestGuard } from "@/lib/hooks/use-request-guard";
 
 export default function LikeButton({
   slug,
@@ -14,9 +15,10 @@ export default function LikeButton({
   const [liked, setLiked] = useState(initialLiked);
   const [count, setCount] = useState(initialCount);
   const [pending, setPending] = useState(false);
+  const guard = useRequestGuard();
 
   async function handleClick() {
-    if (pending) return;
+    if (pending || !guard.begin()) return;
     setPending(true);
 
     const nextLiked = !liked;
@@ -37,6 +39,7 @@ export default function LikeButton({
       setCount((c) => c - (nextLiked ? 1 : -1));
     } finally {
       setPending(false);
+      guard.end();
     }
   }
 

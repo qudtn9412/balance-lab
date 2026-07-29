@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRequestGuard } from "@/lib/hooks/use-request-guard";
 
 export default function ReportButton({ slug }: { slug: string }) {
   const [status, setStatus] = useState<"idle" | "submitting" | "done" | "error">("idle");
+  const guard = useRequestGuard();
 
   async function handleReport() {
-    if (status === "submitting" || status === "done") return;
+    if (status === "submitting" || status === "done" || !guard.begin()) return;
     setStatus("submitting");
 
     try {
@@ -18,6 +20,8 @@ export default function ReportButton({ slug }: { slug: string }) {
       setStatus(res.ok ? "done" : "error");
     } catch {
       setStatus("error");
+    } finally {
+      guard.end();
     }
   }
 

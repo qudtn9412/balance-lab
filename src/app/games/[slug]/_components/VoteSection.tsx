@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import ResultShareCard from "./ResultShareCard";
+import { useRequestGuard } from "@/lib/hooks/use-request-guard";
 
 type Choice = "a" | "b";
 
@@ -38,6 +39,7 @@ export default function VoteSection({
   const [votesB, setVotesB] = useState(optionB.votes);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const guard = useRequestGuard();
   const locked = choice !== null || error === "이미 투표하셨습니다.";
 
   function handleSelect(side: Choice) {
@@ -47,7 +49,7 @@ export default function VoteSection({
   }
 
   async function handleConfirm() {
-    if (!pending || locked || submitting) return;
+    if (!pending || locked || submitting || !guard.begin()) return;
     setSubmitting(true);
     setError(null);
 
@@ -74,6 +76,7 @@ export default function VoteSection({
       setError("네트워크 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
+      guard.end();
     }
   }
 

@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useRequestGuard } from "@/lib/hooks/use-request-guard";
 
 export default function AdminLoginForm() {
   const router = useRouter();
   const [secret, setSecret] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const guard = useRequestGuard();
 
   async function handleSubmit() {
-    if (!secret || submitting) return;
+    if (!secret || submitting || !guard.begin()) return;
     setSubmitting(true);
     setError(null);
 
@@ -32,6 +34,7 @@ export default function AdminLoginForm() {
       setError("네트워크 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
+      guard.end();
     }
   }
 

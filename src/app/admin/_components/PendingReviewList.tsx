@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { useRequestGuard } from "@/lib/hooks/use-request-guard";
 
 type GameRow = {
   slug: string;
@@ -18,9 +19,12 @@ export default function PendingReviewList({ games }: { games: GameRow[] }) {
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [confirmingSlug, setConfirmingSlug] = useState<string | null>(null);
   const [errorSlug, setErrorSlug] = useState<string | null>(null);
+  const guard = useRequestGuard();
 
   async function runAction(slug: string, action: "restore" | "delete") {
-    setPendingAction(`${slug}:${action}`);
+    const key = `${slug}:${action}`;
+    if (!guard.begin(key)) return;
+    setPendingAction(key);
     setErrorSlug(null);
     try {
       const res = await fetch(`/api/admin/games/${slug}/${action}`, { method: "POST" });
@@ -32,6 +36,7 @@ export default function PendingReviewList({ games }: { games: GameRow[] }) {
     } finally {
       setPendingAction(null);
       setConfirmingSlug(null);
+      guard.end(key);
     }
   }
 

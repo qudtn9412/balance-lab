@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { useRequestGuard } from "@/lib/hooks/use-request-guard";
 
 type GameRow = {
   slug: string;
@@ -22,8 +23,10 @@ export default function AllGamesList({ games }: { games: GameRow[] }) {
   const [pendingSlug, setPendingSlug] = useState<string | null>(null);
   const [confirmingSlug, setConfirmingSlug] = useState<string | null>(null);
   const [errorSlug, setErrorSlug] = useState<string | null>(null);
+  const guard = useRequestGuard();
 
   async function handleDelete(slug: string) {
+    if (!guard.begin(slug)) return;
     setPendingSlug(slug);
     setErrorSlug(null);
     try {
@@ -36,6 +39,7 @@ export default function AllGamesList({ games }: { games: GameRow[] }) {
     } finally {
       setPendingSlug(null);
       setConfirmingSlug(null);
+      guard.end(slug);
     }
   }
 

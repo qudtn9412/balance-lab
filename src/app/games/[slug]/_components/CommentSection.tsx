@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { NICKNAME_MAX_LENGTH, readSavedNickname, saveNickname } from "@/lib/nickname";
+import { useRequestGuard } from "@/lib/hooks/use-request-guard";
 
 type Comment = {
   id: string;
@@ -40,6 +41,7 @@ export default function CommentSection({
   const [editPending, setEditPending] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletePending, setDeletePending] = useState(false);
+  const guard = useRequestGuard();
 
   useEffect(() => {
     setNickname(readSavedNickname());
@@ -47,7 +49,7 @@ export default function CommentSection({
 
   async function handleSubmit() {
     const trimmed = content.trim();
-    if (!trimmed || submitting) return;
+    if (!trimmed || submitting || !guard.begin("submit")) return;
 
     setSubmitting(true);
     setError(null);
@@ -81,6 +83,7 @@ export default function CommentSection({
       setError("네트워크 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
+      guard.end("submit");
     }
   }
 
@@ -91,7 +94,7 @@ export default function CommentSection({
 
   async function handleEditSubmit() {
     const trimmed = editContent.trim();
-    if (!editingId || !trimmed || editPending) return;
+    if (!editingId || !trimmed || editPending || !guard.begin("edit")) return;
 
     setEditPending(true);
     try {
@@ -114,11 +117,12 @@ export default function CommentSection({
       setError("네트워크 오류가 발생했습니다.");
     } finally {
       setEditPending(false);
+      guard.end("edit");
     }
   }
 
   async function handleDeleteConfirm() {
-    if (!deletingId || deletePending) return;
+    if (!deletingId || deletePending || !guard.begin("delete")) return;
 
     setDeletePending(true);
     try {
@@ -133,6 +137,7 @@ export default function CommentSection({
       setError("네트워크 오류가 발생했습니다.");
     } finally {
       setDeletePending(false);
+      guard.end("delete");
     }
   }
 

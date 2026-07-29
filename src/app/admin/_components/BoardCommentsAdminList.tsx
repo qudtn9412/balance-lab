@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { useRequestGuard } from "@/lib/hooks/use-request-guard";
 
 type BoardCommentRow = {
   id: string;
@@ -16,8 +17,10 @@ export default function BoardCommentsAdminList({ items }: { items: BoardCommentR
   const router = useRouter();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const guard = useRequestGuard();
 
   async function handleDelete(id: string) {
+    if (!guard.begin(id)) return;
     setPendingId(id);
     try {
       const res = await fetch(`/api/admin/board-comments/${id}/delete`, { method: "POST" });
@@ -25,6 +28,7 @@ export default function BoardCommentsAdminList({ items }: { items: BoardCommentR
     } finally {
       setPendingId(null);
       setConfirmingId(null);
+      guard.end(id);
     }
   }
 

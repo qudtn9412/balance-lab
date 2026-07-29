@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { useRequestGuard } from "@/lib/hooks/use-request-guard";
 
 type FeedbackRow = {
   id: string;
@@ -16,18 +17,24 @@ export default function FeedbackList({ items }: { items: FeedbackRow[] }) {
   const router = useRouter();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const guard = useRequestGuard();
 
   async function handleToggle(id: string) {
+    const key = `toggle:${id}`;
+    if (!guard.begin(key)) return;
     setPendingId(id);
     try {
       const res = await fetch(`/api/admin/feedback/${id}/toggle-status`, { method: "POST" });
       if (res.ok) router.refresh();
     } finally {
       setPendingId(null);
+      guard.end(key);
     }
   }
 
   async function handleDelete(id: string) {
+    const key = `delete:${id}`;
+    if (!guard.begin(key)) return;
     setPendingId(id);
     try {
       const res = await fetch(`/api/admin/feedback/${id}/delete`, { method: "POST" });
@@ -35,6 +42,7 @@ export default function FeedbackList({ items }: { items: FeedbackRow[] }) {
     } finally {
       setPendingId(null);
       setConfirmingId(null);
+      guard.end(key);
     }
   }
 

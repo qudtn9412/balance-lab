@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { isRewardAdAvailable, requestRewardAd } from "@/lib/ads/reward-ad";
+import { useRequestGuard } from "@/lib/hooks/use-request-guard";
 
 type Status = "idle" | "watching" | "granting" | "dismissed" | "error" | "unavailable";
 
@@ -12,24 +13,25 @@ type Status = "idle" | "watching" | "granting" | "dismissed" | "error" | "unavai
  */
 export default function RewardAdButton({ onGranted }: { onGranted: () => void }) {
   const [status, setStatus] = useState<Status>("idle");
+  const guard = useRequestGuard();
 
   async function handleClick() {
-    if (status === "watching" || status === "granting") return;
+    if (status === "watching" || status === "granting" || !guard.begin()) return;
 
-    if (!isRewardAdAvailable()) {
-      setStatus("unavailable");
-      return;
-    }
-
-    setStatus("watching");
-    const viewed = await requestRewardAd();
-    if (!viewed) {
-      setStatus("dismissed");
-      return;
-    }
-
-    setStatus("granting");
     try {
+      if (!isRewardAdAvailable()) {
+        setStatus("unavailable");
+        return;
+      }
+
+      setStatus("watching");
+      const viewed = await requestRewardAd();
+      if (!viewed) {
+        setStatus("dismissed");
+        return;
+      }
+
+      setStatus("granting");
       const res = await fetch("/api/ads/reward", { method: "POST" });
       if (!res.ok) {
         setStatus("error");
@@ -39,6 +41,8 @@ export default function RewardAdButton({ onGranted }: { onGranted: () => void })
       onGranted();
     } catch {
       setStatus("error");
+    } finally {
+      guard.end();
     }
   }
 

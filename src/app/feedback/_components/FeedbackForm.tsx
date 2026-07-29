@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { NICKNAME_MAX_LENGTH, readSavedNickname, saveNickname } from "@/lib/nickname";
+import { useRequestGuard } from "@/lib/hooks/use-request-guard";
 
 async function extractErrorMessage(res: Response): Promise<string> {
   try {
@@ -19,6 +20,7 @@ export default function FeedbackForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const guard = useRequestGuard();
 
   useEffect(() => {
     setNickname(readSavedNickname());
@@ -26,7 +28,7 @@ export default function FeedbackForm() {
 
   async function handleSubmit() {
     const trimmed = content.trim();
-    if (!trimmed || submitting) return;
+    if (!trimmed || submitting || !guard.begin()) return;
 
     setSubmitting(true);
     setError(null);
@@ -50,6 +52,7 @@ export default function FeedbackForm() {
       setError("네트워크 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
+      guard.end();
     }
   }
 
