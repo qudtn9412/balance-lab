@@ -106,7 +106,7 @@ export default async function GamePage({ params }: Params) {
         <BackButton />
         <div className="flex items-center gap-2">
           <LikeButton slug={slug} initialLiked={liked} initialCount={game.likes_count} />
-          <ShareButton title={`${game.option_a_title ?? "옵션 A"} vs ${game.option_b_title ?? "옵션 B"}`} />
+          <ShareButton />
           <ReportButton slug={slug} />
         </div>
       </div>
