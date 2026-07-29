@@ -70,7 +70,7 @@ export default function AllGamesList({ games }: { games: GameRow[] }) {
                 {game.option_a_title ?? "옵션 A"} vs {game.option_b_title ?? "옵션 B"}
               </span>
               <span className="text-xs text-zinc-500">
-                {new Date(game.created_at).toLocaleString("ko-KR", { hour12: false })} · ♥ {game.likes_count} · 댓글{" "}
+                {new Date(game.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", hour12: false })} · ♥ {game.likes_count} · 댓글{" "}
                 {game.comments_count} · 투표 {game.votes_a_count + game.votes_b_count}
               </span>
               {errorSlug === game.slug && <span className="text-xs text-red-600">삭제에 실패했습니다.</span>}

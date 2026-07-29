@@ -67,7 +67,7 @@ export default function FeedbackList({ items }: { items: FeedbackRow[] }) {
         >
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-zinc-500">
-              {item.nickname} · {new Date(item.created_at).toLocaleString("ko-KR", { hour12: false })}
+              {item.nickname} · {new Date(item.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", hour12: false })}
             </span>
             <div className="flex shrink-0 gap-1.5">
               <button

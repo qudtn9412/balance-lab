@@ -46,7 +46,7 @@ export default function BoardCommentsAdminList({ items }: { items: BoardCommentR
         <div key={item.id} className="flex flex-col gap-2 rounded-lg border border-zinc-200 p-3 text-sm dark:border-zinc-800">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-zinc-500">
-              {item.nickname} · {new Date(item.created_at).toLocaleString("ko-KR", { hour12: false })}
+              {item.nickname} · {new Date(item.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", hour12: false })}
             </span>
             <button
               type="button"
