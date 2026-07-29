@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { NICKNAME_MAX_LENGTH, readSavedNickname, saveNickname } from "@/lib/nickname";
 import { useRequestGuard } from "@/lib/hooks/use-request-guard";
 
@@ -15,6 +16,7 @@ async function extractErrorMessage(res: Response): Promise<string> {
 }
 
 export default function FeedbackForm() {
+  const router = useRouter();
   const [nickname, setNickname] = useState("");
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -48,6 +50,7 @@ export default function FeedbackForm() {
 
       setContent("");
       setDone(true);
+      router.refresh();
     } catch {
       setError("네트워크 오류가 발생했습니다.");
     } finally {

@@ -11,12 +11,14 @@ type FeedbackRow = {
   content: string;
   status: string;
   created_at: string;
+  admin_reply: string | null;
 };
 
 export default function FeedbackList({ items }: { items: FeedbackRow[] }) {
   const router = useRouter();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
   const guard = useRequestGuard();
 
   async function handleToggle(id: string) {
@@ -46,6 +48,23 @@ export default function FeedbackList({ items }: { items: FeedbackRow[] }) {
     }
   }
 
+  async function handleSaveReply(id: string) {
+    const key = `reply:${id}`;
+    if (!guard.begin(key)) return;
+    setPendingId(id);
+    try {
+      const res = await fetch(`/api/admin/feedback/${id}/reply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reply: drafts[id] ?? "" }),
+      });
+      if (res.ok) router.refresh();
+    } finally {
+      setPendingId(null);
+      guard.end(key);
+    }
+  }
+
   if (items.length === 0) {
     return (
       <div className="flex min-h-[120px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-300 text-center dark:border-zinc-700">
@@ -56,41 +75,65 @@ export default function FeedbackList({ items }: { items: FeedbackRow[] }) {
 
   return (
     <div className="flex flex-col gap-3">
-      {items.map((item) => (
-        <div
-          key={item.id}
-          className={`flex flex-col gap-2 rounded-lg border p-3 text-sm ${
-            item.status === "resolved"
-              ? "border-zinc-200 opacity-60 dark:border-zinc-800"
-              : "border-zinc-200 dark:border-zinc-800"
-          }`}
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium text-zinc-500">
-              {item.nickname} · {new Date(item.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", hour12: false })}
-            </span>
-            <div className="flex shrink-0 gap-1.5">
+      {items.map((item) => {
+        const draft = drafts[item.id] ?? item.admin_reply ?? "";
+        return (
+          <div
+            key={item.id}
+            className={`flex flex-col gap-2 rounded-lg border p-3 text-sm ${
+              item.status === "resolved"
+                ? "border-zinc-200 opacity-60 dark:border-zinc-800"
+                : "border-zinc-200 dark:border-zinc-800"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-zinc-500">
+                {item.nickname} · {new Date(item.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", hour12: false })}
+              </span>
+              <div className="flex shrink-0 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleToggle(item.id)}
+                  disabled={pendingId === item.id}
+                  className="rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium disabled:opacity-40 dark:border-zinc-700"
+                >
+                  {item.status === "resolved" ? "다시 열기" : "해결 처리"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingId(item.id)}
+                  disabled={pendingId === item.id}
+                  className="rounded-md border border-red-300 px-2.5 py-1 text-xs font-medium text-red-600 disabled:opacity-40 dark:border-red-900"
+                >
+                  삭제
+                </button>
+              </div>
+            </div>
+            <p className="whitespace-pre-wrap break-words">{item.content}</p>
+
+            <div className="flex flex-col gap-1.5 border-t border-dashed border-zinc-200 pt-2 dark:border-zinc-800">
+              <span className="text-xs font-medium text-zinc-500">제출자에게 보이는 답변</span>
+              <textarea
+                value={draft}
+                onChange={(e) => setDrafts((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                maxLength={1000}
+                rows={2}
+                disabled={pendingId === item.id}
+                placeholder="답변을 남기면 건의자가 확인할 수 있어요"
+                className="resize-none rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"
+              />
               <button
                 type="button"
-                onClick={() => handleToggle(item.id)}
-                disabled={pendingId === item.id}
-                className="rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium disabled:opacity-40 dark:border-zinc-700"
+                onClick={() => handleSaveReply(item.id)}
+                disabled={pendingId === item.id || draft === (item.admin_reply ?? "")}
+                className="self-end rounded-md bg-foreground px-3 py-1.5 text-xs font-medium text-background disabled:opacity-40"
               >
-                {item.status === "resolved" ? "다시 열기" : "해결 처리"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirmingId(item.id)}
-                disabled={pendingId === item.id}
-                className="rounded-md border border-red-300 px-2.5 py-1 text-xs font-medium text-red-600 disabled:opacity-40 dark:border-red-900"
-              >
-                삭제
+                답변 저장
               </button>
             </div>
           </div>
-          <p className="whitespace-pre-wrap break-words">{item.content}</p>
-        </div>
-      ))}
+        );
+      })}
 
       <ConfirmDialog
         open={confirmingId !== null}

@@ -162,6 +162,7 @@ export type Database = {
       }
       feedback: {
         Row: {
+          admin_reply: string | null
           client_id: string
           content: string
           created_at: string
@@ -170,6 +171,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          admin_reply?: string | null
           client_id: string
           content: string
           created_at?: string
@@ -178,6 +180,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          admin_reply?: string | null
           client_id?: string
           content?: string
           created_at?: string

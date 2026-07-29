@@ -74,7 +74,7 @@ export default async function AdminPage() {
 
   const { data: feedbackItems } = await supabase
     .from("feedback")
-    .select("id, nickname, content, status, created_at")
+    .select("id, nickname, content, status, created_at, admin_reply")
     .order("created_at", { ascending: false })
     .limit(100);
 
