@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type Dispatch, type SetStateAction } from "react";
+import { useState, useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 import { useRouter } from "next/navigation";
 import RewardAdButton from "@/components/RewardAdButton";
 import { NICKNAME_MAX_LENGTH, readSavedNickname, saveNickname } from "@/lib/nickname";
@@ -50,6 +50,12 @@ export default function NewGameForm() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // React state 업데이트는 다음 렌더까지 반영되지 않아서, 같은 틱에서 두 번 클릭되면
+  // status/submitting 체크만으로는 두 요청이 동시에 통과할 수 있다(중복 클릭으로 게임이
+  // 2개 등록된 사고 원인). ref는 즉시 반영되므로 여기서 동기적으로 막는다.
+  const generatingRef = useRef<{ a: boolean; b: boolean }>({ a: false, b: false });
+  const submittingRef = useRef(false);
+
   useEffect(() => {
     setNickname(readSavedNickname());
   }, []);
@@ -58,7 +64,8 @@ export default function NewGameForm() {
     const option = side === "a" ? optionA : optionB;
     const setOption = side === "a" ? setOptionA : setOptionB;
     const prompt = option.prompt.trim();
-    if (!prompt || option.status === "generating") return;
+    if (!prompt || generatingRef.current[side]) return;
+    generatingRef.current[side] = true;
 
     setOption((prev) => ({ ...prev, status: "generating", error: null, errorStatus: null }));
 
@@ -79,11 +86,14 @@ export default function NewGameForm() {
       setOption((prev) => ({ ...prev, status: "done", imageUrl: data.imageUrl }));
     } catch {
       setOption((prev) => ({ ...prev, status: "error", error: "네트워크 오류가 발생했습니다.", errorStatus: null }));
+    } finally {
+      generatingRef.current[side] = false;
     }
   }
 
   async function handleSubmit() {
-    if (!optionA.prompt.trim() || !optionB.prompt.trim() || submitting) return;
+    if (!optionA.prompt.trim() || !optionB.prompt.trim() || submittingRef.current) return;
+    submittingRef.current = true;
 
     setSubmitting(true);
     setSubmitError(null);
@@ -119,6 +129,7 @@ export default function NewGameForm() {
     } catch {
       setSubmitError("네트워크 오류가 발생했습니다.");
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   }
