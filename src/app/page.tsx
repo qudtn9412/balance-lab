@@ -11,10 +11,11 @@ function escapeLikePattern(value: string): string {
   return value.replace(/[%_\\]/g, (c) => `\\${c}`);
 }
 
-function buildHref(sort: Sort, creator?: string): string {
+function buildHref(sort: Sort, creator?: string, page?: number): string {
   const params = new URLSearchParams();
   if (sort === "popular") params.set("sort", "popular");
   if (creator) params.set("creator", creator);
+  if (page && page > 1) params.set("page", String(page));
   const qs = params.toString();
   return qs ? `/?${qs}` : "/";
 }
@@ -22,10 +23,12 @@ function buildHref(sort: Sort, creator?: string): string {
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ sort?: string; creator?: string }>;
+  searchParams: Promise<{ sort?: string; creator?: string; page?: string }>;
 }) {
-  const { sort: rawSort, creator } = await searchParams;
+  const { sort: rawSort, creator, page: rawPage } = await searchParams;
   const sort: Sort = rawSort === "popular" ? "popular" : "new";
+  const page = Math.max(1, Number.parseInt(rawPage ?? "1", 10) || 1);
+  const offset = (page - 1) * FEED_PAGE_SIZE;
 
   const supabase = createPublicClient();
 
@@ -36,7 +39,7 @@ export default async function Home({
     )
     .eq("status", "published")
     .order(sort === "popular" ? "likes_count" : "created_at", { ascending: false })
-    .limit(FEED_PAGE_SIZE);
+    .range(offset, offset + FEED_PAGE_SIZE - 1);
   let countQuery = supabase.from("balance_games").select("*", { count: "exact", head: true }).eq("status", "published");
 
   if (creator) {
@@ -46,6 +49,8 @@ export default async function Home({
   }
 
   const [{ data: games }, { count: totalCount }] = await Promise.all([gamesQuery, countQuery]);
+  const hasNextPage = typeof totalCount === "number" && offset + FEED_PAGE_SIZE < totalCount;
+  const hasPrevPage = page > 1;
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
@@ -104,27 +109,59 @@ export default async function Home({
       )}
 
       {games && games.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-          {games.map((game) => (
-            <GameCard
-              key={game.slug}
-              slug={game.slug}
-              creatorNickname={game.creator_nickname}
-              likesCount={game.likes_count}
-              commentsCount={game.comments_count}
-              optionA={{
-                imageUrl: game.option_a_image_url,
-                title: game.option_a_title,
-                votes: game.votes_a_count,
-              }}
-              optionB={{
-                imageUrl: game.option_b_image_url,
-                title: game.option_b_title,
-                votes: game.votes_b_count,
-              }}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+            {games.map((game) => (
+              <GameCard
+                key={game.slug}
+                slug={game.slug}
+                creatorNickname={game.creator_nickname}
+                likesCount={game.likes_count}
+                commentsCount={game.comments_count}
+                optionA={{
+                  imageUrl: game.option_a_image_url,
+                  title: game.option_a_title,
+                  votes: game.votes_a_count,
+                }}
+                optionB={{
+                  imageUrl: game.option_b_image_url,
+                  title: game.option_b_title,
+                  votes: game.votes_b_count,
+                }}
+              />
+            ))}
+          </div>
+
+          {(hasPrevPage || hasNextPage) && (
+            <div className="flex items-center justify-center gap-3">
+              {hasPrevPage ? (
+                <Link
+                  href={buildHref(sort, creator, page - 1)}
+                  className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium hover:border-foreground dark:border-zinc-700"
+                >
+                  이전
+                </Link>
+              ) : (
+                <span className="rounded-md border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-300 dark:border-zinc-800 dark:text-zinc-700">
+                  이전
+                </span>
+              )}
+              <span className="text-sm text-zinc-500">{page} 페이지</span>
+              {hasNextPage ? (
+                <Link
+                  href={buildHref(sort, creator, page + 1)}
+                  className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium hover:border-foreground dark:border-zinc-700"
+                >
+                  다음
+                </Link>
+              ) : (
+                <span className="rounded-md border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-300 dark:border-zinc-800 dark:text-zinc-700">
+                  다음
+                </span>
+              )}
+            </div>
+          )}
+        </>
       ) : (
         <div className="flex min-h-[240px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-300 text-center dark:border-zinc-700">
           <span className="text-2xl">🎲</span>
