@@ -19,7 +19,7 @@ export default function ShareButton() {
     <button
       type="button"
       onClick={handleCopy}
-      className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium dark:border-zinc-700"
+      className="flex items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium whitespace-nowrap dark:border-zinc-700"
     >
       {copied ? "✓ 링크 복사됨" : "🔗 링크 복사"}
     </button>
