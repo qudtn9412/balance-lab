@@ -12,8 +12,10 @@ declare global {
     adBreakDone?: (placementInfo: unknown) => void;
   }
 
+  type AdsByGoogleQueue = unknown[] & { pauseAdRequests?: 0 | 1 };
+
   interface Window {
     adBreak?: (options: AdBreakOptions) => void;
-    adsbygoogle?: unknown[];
+    adsbygoogle?: AdsByGoogleQueue;
   }
 }

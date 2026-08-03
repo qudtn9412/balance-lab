@@ -4,6 +4,7 @@ import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import AdsenseScript from "@/components/AdsenseScript";
+import AdsPauseController from "@/components/AdsPauseController";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 
 const geistSans = Geist({
@@ -35,6 +36,7 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <AdsenseScript />
+        <AdsPauseController />
         <SiteHeader isAdmin={isAdmin} />
         {children}
         <SiteFooter />
